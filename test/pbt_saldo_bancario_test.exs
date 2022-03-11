@@ -1,6 +1,7 @@
 defmodule PbtSaldoBancarioTest do
   use ExUnit.Case
   doctest PbtSaldoBancario
+  use PropCheck
 
   test "Caso não haja saldo suficiente, a transferência não pode ser efetuada" do
     saldo_atual = 10.00
@@ -14,5 +15,22 @@ defmodule PbtSaldoBancarioTest do
     {:sucesso, 75.00} = PbtSaldoBancario.transferir(saldo_atual, valor_transferido) 
   end
 
+  property "O cliente consegue transferir qualquer valor desde que tenha saldo suficiente" do
+
+    forall saldo_inicial_float <- float(0, :inf) do
+
+      saldo_inicial = Float.round(saldo_inicial_float, 2)
+
+      forall transferencia_float <- float(:inf, saldo_inicial) do
+
+        transferencia = Float.round(transferencia_float, 2)
+        {:sucesso, saldo_restante} = PbtSaldoBancario.transferir(saldo_inicial, transferencia)
+
+        saldo_inicial == Float.round(saldo_restante + transferencia, 2) and
+        saldo_restante <= saldo_inicial
+      end
+    end
+
+  end
 
 end
